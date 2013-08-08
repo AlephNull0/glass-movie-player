@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+    <com.google.glass.widget.TypophileTextView
+        android:id="@+id/position"
+        android:ellipsize="end"
+        style="@style/LargeOverlayText"
+        android:paddingLeft="24px"
+        android:paddingRight="24px"
+        android:paddingTop="8px"
+        android:paddingBottom="8px"
+        android:background="#44000000"
+        android:layout_centerInParent="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    
+</RelativeLayout>

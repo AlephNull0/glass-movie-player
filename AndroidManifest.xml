@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.ocd.dev.glassmovieplayer"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="15"
+        android:targetSdkVersion="15" />
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+    <application
+        android:name="com.google.glass.app.GlassApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen">
+        <activity
+            android:name="com.ocd.dev.glassmovieplayer.MoviePickerActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.ocd.dev.glassmovieplayer.MoviePlayerActivity"
+            android:label="Video Player">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" /> 
+            </intent-filter>
+        </activity>
+        
+        <receiver
+            android:name="com.ocd.dev.glassmovieplayer.LongPressBlocker">
+            <intent-filter
+                android:priority="9999">
+                <action android:name="com.google.glass.action.LONG_TAP" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>
