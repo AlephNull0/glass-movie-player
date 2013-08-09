@@ -38,13 +38,13 @@ Watching Videos
 ---------------
 Browsing and picking a video to watch is self-explanatory. Once you start the application, just swipe the trackpad as if you were navigating through your timeline items. Press the trackpad to select a video.  
 
-[Every video is displayed as a card](assets/picker1.png)
-[Browse videos by swiping--just like navigating your timeline](assets/picker2.png)
+![Every video is displayed as a card](assets/picker1.png?raw=true)
+![Browse videos by swiping--just like navigating your timeline](assets/picker2.png?raw=true)
 
 Once you are watching a video, press the trackpad to pause or resume. You can seek (that is, rewind or fast-forward) by swiping on the trackpad using two fingers at the same time. 
 
-[Press the trackpad to pause or resume video](assets/player_pause.png)
-[Swipe with two fingers to seek (that is, reverse or fast forward)](assets/player_seek.png)
+![Press the trackpad to pause or resume video](assets/player_pause.png?raw=true)
+![Swipe with two fingers to seek (that is, reverse or fast forward)](assets/player_seek.png?raw=true)
 
 
 Whisky Tango Foxtrot Why a Movie Player?
