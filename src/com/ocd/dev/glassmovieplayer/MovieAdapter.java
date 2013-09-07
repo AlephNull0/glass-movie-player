@@ -54,11 +54,10 @@ public class MovieAdapter extends SimpleCursorAdapter implements ViewRecycler {
 
 	@Override
 	public void recycleView(View arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 	
-	public class ImageLoader extends AsyncTask<Object, String, Bitmap> {
+	private class ImageLoader extends AsyncTask<Object, String, Bitmap> {
 
 	    private ImageView view;
 

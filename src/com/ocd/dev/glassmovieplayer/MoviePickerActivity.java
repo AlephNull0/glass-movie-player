@@ -2,7 +2,10 @@ package com.ocd.dev.glassmovieplayer;
 
 import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
+import android.content.AsyncQueryHandler;
+import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
@@ -15,6 +18,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.glass.app.GlassApplication;
@@ -25,6 +29,7 @@ import com.google.glass.sound.SoundManager;
 import com.google.glass.sound.SoundManager.SoundId;
 
 public class MoviePickerActivity extends Activity implements InputListener, LoaderCallbacks<Cursor> {
+	public static final String EXTRA_MOVIE_BUCKET = "movie bucket";
 	public static final int RESULT_VIDEO = 1;
 	private static final int URL_LOADER = 0;
 	private Cursor mMovieCursor;
@@ -33,19 +38,19 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 	private MovieAdapter mAdapter;
 	private View mEmptyMessage;
 	private int mLength;
+	private ProgressBar mDeleteProgress;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.activity_movie_picker);
 		mLength = -1;
 		mList = (HorizontalList)findViewById(R.id.list);
-		//mList = new HorizontalList(this, false);
 		mEmptyMessage = findViewById(R.id.empty);
-		
-		//setContentView(mList);
+		mDeleteProgress = (ProgressBar)findViewById(R.id.progress);
 		
 		mTouchDetector = new TouchDetector(this, this);
 		
@@ -135,18 +140,39 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 			long videoId = mMovieCursor.getLong(idIndex);
 			Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
 			Uri itemUri = ContentUris.withAppendedId(contentUri, videoId);
+			
+			DeleteHandler deleteHandler = new DeleteHandler(getContentResolver(), mDeleteProgress);
+			deleteHandler.startDelete(0, this, itemUri, null, null);
+		}
+	}
+	
+	private static class DeleteHandler extends AsyncQueryHandler {
+		private ProgressBar mProgress;
 
-			int rows = getContentResolver().delete(itemUri, null, null);
-
-			if(rows == 0)
+		public DeleteHandler(ContentResolver cr, ProgressBar progress) {
+			super(cr);
+			mProgress = progress;
+			progress.setVisibility(View.VISIBLE);
+		}
+		
+		@Override
+		protected void onDeleteComplete(int token, Object cookie, int result) {
+			super.onDeleteComplete(token, cookie, result);
+			
+			mProgress.setVisibility(View.INVISIBLE);
+			
+			Context context = (Context)cookie;
+			
+			if(result == 0)
 			{
-				Toast.makeText(this, "Error. Could not delete video.", Toast.LENGTH_SHORT).show();
+				Toast.makeText(context, "Error. Could not delete video.", Toast.LENGTH_SHORT).show();
 			}
 			else
 			{
-				Toast.makeText(this, "Video deleted", Toast.LENGTH_SHORT).show();
+				Toast.makeText(context, "Video deleted", Toast.LENGTH_SHORT).show();
 			}
 		}
+		
 	}
 	
 	private GlassApplication getGlassApplication()
@@ -202,12 +228,23 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 		switch(loaderId) {
 		case URL_LOADER:
 			String[] proj = { MediaStore.Video.Media._ID,
+					MediaStore.Video.Media.ALBUM,
+					MediaStore.Video.Media.BUCKET_DISPLAY_NAME,
 					MediaStore.Video.Media.DATA,
 					MediaStore.Video.Media.DISPLAY_NAME,
 					MediaStore.Video.Media.SIZE };
-			String selection = MediaStore.Video.Media.DATA + " not like ? ";
-
-		    String[] selectionArgs = new String[] {"%sdcard/glass_cached_files%"};
+			
+			long bucketId = getIntent().getLongExtra(EXTRA_MOVIE_BUCKET, 0L);
+			String selection = null;
+			String[] selectionArgs = null;
+			
+			if(bucketId != 0) {
+				selection = MediaStore.Video.Media.DATA + " not like ? and " + MediaStore.Video.Media.BUCKET_ID + " =? " ;
+			    selectionArgs = new String[] {"%sdcard/glass_cached_files%", Long.toString(bucketId) };
+			} else {
+				selection = MediaStore.Video.Media.DATA + " not like ? ";
+			    selectionArgs = new String[] { "%sdcard/glass_cached_files%" };
+			}
 
 			return new CursorLoader(this, MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
 					proj, selection, selectionArgs, MediaStore.Video.Media.DISPLAY_NAME);
@@ -227,6 +264,10 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 		
 		if(mLength == 0) {
 			mEmptyMessage.setVisibility(View.VISIBLE);
+			long bucketId = getIntent().getLongExtra(EXTRA_MOVIE_BUCKET, 0L);
+			if(bucketId != 0) {
+				finish();
+			}
 		} else {
 			mEmptyMessage.setVisibility(View.GONE);
 		}

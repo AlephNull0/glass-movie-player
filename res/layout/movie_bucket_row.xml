@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.glass.horizontalscroll.RelativeLayoutCard xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="640px"
+    android:layout_height="360px" >
+    
+    <ImageView
+        android:id="@+id/thumbnail1"
+        android:scaleType="centerCrop"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_width="320px"
+        android:layout_height="180px" />
+    
+    <ImageView
+        android:id="@+id/thumbnail2"
+        android:scaleType="centerCrop"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@id/thumbnail1"
+        android:layout_width="320px"
+        android:layout_height="180px" />
+    
+    <ImageView
+        android:id="@+id/thumbnail3"
+        android:scaleType="centerCrop"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/thumbnail1"
+        android:layout_width="320px"
+        android:layout_height="180px" />
+    
+    <ImageView
+        android:id="@+id/thumbnail4"
+        android:scaleType="centerCrop"
+        android:layout_below="@id/thumbnail1"
+        android:layout_toRightOf="@id/thumbnail3"
+        android:layout_width="320px"
+        android:layout_height="180px" />
+    
+    
+    <com.google.glass.widget.TypophileTextView
+        android:id="@+id/name"
+        android:textAppearance="@style/MediumOverlayText"
+        android:padding="16dip"
+        fontWeight="condensed"
+        android:layout_centerInParent="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    
+    <com.google.glass.widget.TipsView
+        android:id="@+id/count"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40px"
+        android:layout_marginRight="40px"
+        style="@style/TipsViewText" />
+    
+</com.google.glass.horizontalscroll.RelativeLayoutCard>

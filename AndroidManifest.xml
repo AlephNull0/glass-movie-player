@@ -18,12 +18,18 @@
         <activity
             android:name="com.ocd.dev.glassmovieplayer.MoviePickerActivity"
             android:label="@string/app_name" >
+        </activity>
+        
+        <activity
+            android:name="com.ocd.dev.glassmovieplayer.MovieBucketBrowserActivity"
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
         <activity
             android:name="com.ocd.dev.glassmovieplayer.MoviePlayerActivity"
             android:label="Video Player">
