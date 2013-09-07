@@ -100,6 +100,7 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
             mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mPlayer.setDataSource(this, mMovieUri);
             mPlayer.setOnPreparedListener(this);
+            mPlayer.setOnErrorListener(mErrorListener);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
             errorLoadingMediaPlayer();
@@ -380,5 +381,24 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     public void start() {
         mPlayer.start();
     }
+    
+    private MediaPlayer.OnErrorListener mErrorListener = new MediaPlayer.OnErrorListener() {
+		
+		@Override
+		public boolean onError(MediaPlayer mp, int what, int extra) {
+			if(what == MediaPlayer.MEDIA_ERROR_UNKNOWN && extra == -2147483648) {
+				fatalErrorMessage("Unsupported video format");
+			} else {
+				fatalErrorMessage(String.format("Cannot play video. Error code (%d, %d)", what, extra));
+			}
+			
+			return false;
+		}
+	};
+	
+	private void fatalErrorMessage(String message) {
+		Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+		finish();
+	}
 
 }

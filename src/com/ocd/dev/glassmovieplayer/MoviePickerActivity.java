@@ -2,7 +2,7 @@ package com.ocd.dev.glassmovieplayer;
 
 import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
-import android.content.Context;
+import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
@@ -11,12 +11,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.widget.Toast;
 
 import com.google.glass.app.GlassApplication;
-import com.google.glass.horizontalscroll.BaseHorizontalScrollView;
 import com.google.glass.input.InputListener;
 import com.google.glass.input.SwipeDirection;
 import com.google.glass.input.TouchDetector;
@@ -26,18 +27,25 @@ import com.google.glass.sound.SoundManager.SoundId;
 public class MoviePickerActivity extends Activity implements InputListener, LoaderCallbacks<Cursor> {
 	public static final int RESULT_VIDEO = 1;
 	private static final int URL_LOADER = 0;
-	private Cursor mMoviecursor;
+	private Cursor mMovieCursor;
 	private HorizontalList mList;
 	private TouchDetector mTouchDetector;
 	private MovieAdapter mAdapter;
+	private View mEmptyMessage;
+	private int mLength;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		super.onCreate(savedInstanceState);
 		
-		mList = new HorizontalList(this, false);
-		setContentView(mList);
+		setContentView(R.layout.activity_movie_picker);
+		mLength = -1;
+		mList = (HorizontalList)findViewById(R.id.list);
+		//mList = new HorizontalList(this, false);
+		mEmptyMessage = findViewById(R.id.empty);
+		
+		//setContentView(mList);
 		
 		mTouchDetector = new TouchDetector(this, this);
 		
@@ -47,7 +55,7 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
         
 		String[] proj = { 
 				MediaStore.Video.Media.DISPLAY_NAME };
-        mAdapter = new MovieAdapter(this, R.layout.movie_row, mMoviecursor, proj, new int[] { R.id.name } , 0);
+        mAdapter = new MovieAdapter(this, R.layout.movie_row, mMovieCursor, proj, new int[] { R.id.name } , 0);
         mList.setAdapter(mAdapter);
 	}
 	
@@ -58,42 +66,36 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 	}
 	
 	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		if(mLength > 0) {
+			menu.findItem(R.id.play).setVisible(true).setEnabled(true);
+			menu.findItem(R.id.delete).setVisible(true).setEnabled(true);
+		} else {
+			menu.findItem(R.id.play).setVisible(false).setEnabled(false);
+			menu.findItem(R.id.delete).setVisible(false).setEnabled(false);
+		}
+		
+		return super.onPrepareOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch(item.getItemId()) {
+		case R.id.play:
+			play();
+			return true;
+		case R.id.delete:
+			delete();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+	}
+	
+	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
 		mTouchDetector.onTouchEvent(event);
 		return true;
-	}
-	
-	private class HorizontalList extends BaseHorizontalScrollView<Integer, String> {
-
-		public HorizontalList(Context arg0, boolean arg1) {
-			super(arg0, arg1);
-		}
-
-		@Override
-		public int findIdPosition(Integer position) {
-			return position;
-		}
-
-		@Override
-		public int findItemPosition(String arg0) {
-			return 0;
-		}
-
-		@Override
-		public int getHomePosition() {
-			return 0;
-		}
-
-		@Override
-		public View getViewForPosition(int position) {
-			return getAdapter().getView(position, null, this);
-		}
-
-		@Override
-		public void rebindView(int arg0, View arg1) {
-			
-		}
-		
 	}
 
 	@Override
@@ -103,23 +105,48 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 
 	@Override
 	public boolean onConfirm() {
+		openOptionsMenu();
+		return true;
+	}
+	
+	private void play() {
 		int position = mList.getSelectedItemPosition();
 		
-		if(position != -1) {
-			int index = mMoviecursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
-			mMoviecursor.moveToPosition(position);
-			String videoLocationPath = mMoviecursor.getString(index);
+		if(mLength > 0 && position != -1) {
+			int index = mMovieCursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
+			mMovieCursor.moveToPosition(position);
+			String videoLocationPath = mMovieCursor.getString(index);
 			Uri videoLocation = Uri.parse(videoLocationPath);
 			
 			Intent intent = new Intent(Intent.ACTION_VIEW);
 			intent.setDataAndType(videoLocation, "video/*");
 			getSoundManager().playSound(SoundId.VIDEO_START);
 			startActivity(intent);
-			return true;
-			
-		}
+		} 
+	}
+	
+	private void delete() {
+		int position = mList.getSelectedItemPosition();
 		
-		return false;
+		if(mLength > 0 && position != -1) {
+			mMovieCursor.moveToPosition(position);
+			
+			int idIndex = mMovieCursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
+			long videoId = mMovieCursor.getLong(idIndex);
+			Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+			Uri itemUri = ContentUris.withAppendedId(contentUri, videoId);
+
+			int rows = getContentResolver().delete(itemUri, null, null);
+
+			if(rows == 0)
+			{
+				Toast.makeText(this, "Error. Could not delete video.", Toast.LENGTH_SHORT).show();
+			}
+			else
+			{
+				Toast.makeText(this, "Video deleted", Toast.LENGTH_SHORT).show();
+			}
+		}
 	}
 	
 	private GlassApplication getGlassApplication()
@@ -179,12 +206,12 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 					MediaStore.Video.Media.DISPLAY_NAME,
 					MediaStore.Video.Media.SIZE };
 			String selection = MediaStore.Video.Media.DATA + " not like ? ";
-		            
+
 		    String[] selectionArgs = new String[] {"%sdcard/glass_cached_files%"};
-	        
+
 			return new CursorLoader(this, MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
 					proj, selection, selectionArgs, MediaStore.Video.Media.DISPLAY_NAME);
-			
+
 		default:
 			return null;
 		}
@@ -192,13 +219,22 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 
 	@Override
 	public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-		mMoviecursor = cursor;
-		mAdapter.changeCursor(cursor);
+		mMovieCursor = cursor;
+		mAdapter.swapCursor(cursor);
+		
+		mLength = cursor.getCount();
+		invalidateOptionsMenu();
+		
+		if(mLength == 0) {
+			mEmptyMessage.setVisibility(View.VISIBLE);
+		} else {
+			mEmptyMessage.setVisibility(View.GONE);
+		}
 	}
 
 	@Override
 	public void onLoaderReset(Loader<Cursor> arg0) {
-		
+		mAdapter.swapCursor(null);
 	}
 
 }

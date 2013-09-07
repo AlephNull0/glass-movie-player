@@ -48,12 +48,7 @@ public class MovieAdapter extends SimpleCursorAdapter implements ViewRecycler {
 		name.setText(cursor.getString(mVideoColumnIndex));
 		
 		long id = cursor.getLong(mIdColumnIndex);
-		/*
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inSampleSize = 1;
-		Bitmap curThumb = MediaStore.Video.Thumbnails.getThumbnail(context.getContentResolver(), id, MediaStore.Video.Thumbnails.MINI_KIND, options);
-		thumbnail.setImageBitmap(curThumb);
-		*/
+		
 		new ImageLoader().execute(thumbnail, Long.valueOf(id));
 	}
 
