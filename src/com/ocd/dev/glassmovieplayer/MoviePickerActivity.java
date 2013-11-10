@@ -1,5 +1,7 @@
 package com.ocd.dev.glassmovieplayer;
 
+import java.util.ArrayList;
+
 import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.AsyncQueryHandler;
@@ -89,6 +91,9 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 		case R.id.play:
 			play();
 			return true;
+		case R.id.auto_play:
+			autoPlay();
+			return true;
 		case R.id.delete:
 			delete();
 			return true;
@@ -110,6 +115,7 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 
 	@Override
 	public boolean onConfirm() {
+		getSoundManager().playSound(SoundId.TAP);
 		openOptionsMenu();
 		return true;
 	}
@@ -128,6 +134,27 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 			getSoundManager().playSound(SoundId.VIDEO_START);
 			startActivity(intent);
 		} 
+	}
+	
+	private void autoPlay() {
+		int position = mList.getSelectedItemPosition();
+		
+		if(mLength > 0 && position != -1) {
+			int index = mMovieCursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
+			
+			ArrayList<CharSequence> videoList = new ArrayList<CharSequence>();
+			
+			mMovieCursor.moveToPosition(position);
+			do {
+				String videoLocationPath = mMovieCursor.getString(index);
+				videoList.add(videoLocationPath);
+			} while(mMovieCursor.moveToNext());
+			
+			Intent intent = new Intent(this, MoviePlayerActivity.class);
+			intent.putCharSequenceArrayListExtra(MoviePlayerActivity.EXTRA_PLAYLIST, videoList);
+			startActivity(intent);
+		}
+		
 	}
 	
 	private void delete() {
@@ -191,11 +218,6 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 	}
 
 	@Override
-	public boolean onDoubleTap() {
-		return false;
-	}
-
-	@Override
 	public boolean onFingerCountChanged(int arg0, boolean arg1) {
 		return mList.onFingerCountChanged(arg0, arg1);
 	}
@@ -214,12 +236,7 @@ public class MoviePickerActivity extends Activity implements InputListener, Load
 	}
 
 	@Override
-	public boolean onSwipeCanceled(int arg0) {
-		return mList.onSwipeCanceled(arg0);
-	}
-
-	@Override
-	public boolean onVerticalHeadScroll(float arg0, float arg1) {
+	public boolean onVerticalHeadScroll(float arg0) {
 		return false;
 	}
 

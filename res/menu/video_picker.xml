@@ -5,6 +5,12 @@
         android:showAsAction="never"
         android:icon="@drawable/ic_media_play"
         android:title="Play" />
+
+    <item
+        android:id="@+id/auto_play"
+        android:showAsAction="never"
+        android:icon="@drawable/ic_media_play"
+        android:title="Auto Play" />
     
     <item
         android:id="@+id/delete"

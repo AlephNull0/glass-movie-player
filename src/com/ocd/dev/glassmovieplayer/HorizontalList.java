@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.google.glass.horizontalscroll.BaseHorizontalScrollView;
+import com.google.glass.widget.horizontalscroll.BaseHorizontalScrollView;
 
 public class HorizontalList extends BaseHorizontalScrollView<Integer, String> {
 	public HorizontalList(Context arg0, boolean arg1) {
@@ -39,12 +39,8 @@ public class HorizontalList extends BaseHorizontalScrollView<Integer, String> {
 	}
 
 	@Override
-	public View getViewForPosition(int position) {
+	public View getViewForPosition(int position, View arg1) {
 		return getAdapter().getView(position, null, this);
 	}
 
-	@Override
-	public void rebindView(int arg0, View arg1) {
-		
-	}
 }

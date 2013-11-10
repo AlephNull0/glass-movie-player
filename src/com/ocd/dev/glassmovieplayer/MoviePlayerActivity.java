@@ -1,6 +1,7 @@
 package com.ocd.dev.glassmovieplayer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import android.app.Activity;
 import android.content.Context;
@@ -38,6 +39,7 @@ import com.google.glass.sound.SoundManager.SoundId;
 
 public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callback, MediaPlayer.OnPreparedListener {
 	public static final String TAG = "VID";
+	public static final String EXTRA_PLAYLIST = "play list";
 	public static final String PREFS_PREVIOUS_URL = "prev id";
 	public static final String PREFS_PREVIOUS_POSITION = "prev pos";
     private SurfaceView mMovieSurface;
@@ -51,6 +53,8 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     private ProgressBar mLoadProgressBar;
     private MovieSeekBar mMovieSeekBar;
 	private TouchDetector mTouchDetector;
+	private ArrayList<CharSequence> mVideoList;
+	private int mVideoIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,7 +102,13 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 
 	private void initMoviePlayer() {
 		Intent intent = getIntent();
-    	mMovieUri = intent.getData();
+		
+		mVideoList = intent.getCharSequenceArrayListExtra(EXTRA_PLAYLIST);
+		if(mVideoList == null) {
+	    	mMovieUri = intent.getData();
+		} else if (mVideoList.size() > 0) {
+			mMovieUri = Uri.parse((String)mVideoList.get(mVideoIndex++));
+		}
         
         try {
 	        mPlayer = new MediaPlayer();
@@ -127,7 +137,7 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 
 	private void initWakeLock() {
 		mPowerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
-        mWakeLock = mPowerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG);
+        mWakeLock = mPowerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, TAG);
 	}
 
 	private void initMovieSeekBar() {
@@ -298,10 +308,33 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 
     	@Override
     	public void onCompletion(MediaPlayer mp) {
-    		getSoundManager().playSound(SoundId.VIDEO_STOP);
-    		mMovieSeekBar.hideNow();
-    		finish();
+    		if(mVideoList == null || mVideoIndex >= mVideoList.size()) {
+	    		getSoundManager().playSound(SoundId.VIDEO_STOP);
+	    		mMovieSeekBar.hideNow();
+	    		finish();
+    		} else {
+	    		getSoundManager().playSound(SoundId.VIDEO_START);
+				playNextMovie();
+    		}
     	}
+
+		private void playNextMovie() {
+			try {
+				mMovieUri = Uri.parse((String)mVideoList.get(mVideoIndex++));
+				mPlayer.reset();
+				mPlayer.setDataSource(MoviePlayerActivity.this, mMovieUri);
+				mPlayer.prepare();
+				start();
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				e.printStackTrace();
+			} catch (IllegalStateException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
     };
 
     public int getCurrentPosition() {
@@ -351,12 +384,7 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 		private float x;
 		
 		@Override
-		public boolean onVerticalHeadScroll(float arg0, float arg1) {
-			return false;
-		}
-		
-		@Override
-		public boolean onSwipeCanceled(int arg0) {
+		public boolean onVerticalHeadScroll(float arg0) {
 			return false;
 		}
 		
@@ -378,7 +406,6 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
             if(pos > duration) pos = duration;
             seekTo(pos);
             mMovieSeekBar.setProgress(pos);
-			Log.e("PS", String.format("%f", dx));
 			
 			x = arg1;
 			
@@ -394,11 +421,6 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 				x = 0f;
 				updateSeekBarProgressWhileShowing();
 			}
-			return false;
-		}
-		
-		@Override
-		public boolean onDoubleTap() {
 			return false;
 		}
 		

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.glass.horizontalscroll.RelativeLayoutCard xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.glass.widget.horizontalscroll.RelativeLayoutCard xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="640px"
     android:layout_height="360px" >
     
@@ -28,4 +28,4 @@
         android:layout_marginRight="40px"
         style="@style/TipsViewText" />
     
-</com.google.glass.horizontalscroll.RelativeLayoutCard>
+</com.google.glass.widget.horizontalscroll.RelativeLayoutCard>

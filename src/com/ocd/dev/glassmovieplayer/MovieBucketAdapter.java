@@ -15,8 +15,8 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.glass.horizontalscroll.ViewRecycler;
 import com.google.glass.widget.TipsView;
+import com.google.glass.widget.horizontalscroll.ViewRecycler;
 
 public class MovieBucketAdapter extends BaseAdapter implements ViewRecycler {
 	private Context mContext;

@@ -97,11 +97,6 @@ public class MovieBucketBrowserActivity extends Activity implements InputListene
 	}
 
 	@Override
-	public boolean onDoubleTap() {
-		return false;
-	}
-
-	@Override
 	public boolean onFingerCountChanged(int arg0, boolean arg1) {
 		return mList.onFingerCountChanged(arg0, arg1);
 	}
@@ -120,12 +115,7 @@ public class MovieBucketBrowserActivity extends Activity implements InputListene
 	}
 
 	@Override
-	public boolean onSwipeCanceled(int arg0) {
-		return mList.onSwipeCanceled(arg0);
-	}
-
-	@Override
-	public boolean onVerticalHeadScroll(float arg0, float arg1) {
+	public boolean onVerticalHeadScroll(float arg0) {
 		return false;
 	}
 

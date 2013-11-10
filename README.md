@@ -1,6 +1,6 @@
 Glass Movie Player
 ==========================
-Browse and watch movies on Google Glass using a simple interface. 
+Browse and watch movies on Google Glass.
 
 Usage
 -----
@@ -31,12 +31,12 @@ You may want to upload videos from your computer to google glass. My preferred m
 adb push my_video.mp4 /sdcard/Movies  
 ```
 
-You can upload videos anywhere in the /sdcard directory, but I just like using the Movies subdirectory.
+You can upload videos anywhere in the /sdcard directory, but I like using the Movies subdirectory.
 
 
 Watching Videos
 ---------------
-Browsing and picking a video to watch is self-explanatory. Once you start the application, just swipe the trackpad as if you were navigating through your timeline items. Press the trackpad to select a video.  
+Browsing and picking a video to watch is self-explanatory. Once you start the application, scroll through the videos by swiping on the trackpad as if you were navigating through your timeline items. Press the trackpad to select a video.  
 
 ![Every video is displayed as a card](assets/picker1.png?raw=true)
 ![Browse videos by swiping--just like navigating your timeline](assets/picker2.png?raw=true)
@@ -47,6 +47,6 @@ Once you are watching a video, press the trackpad to pause or resume. You can se
 ![Swipe with two fingers to seek (that is, reverse or fast forward)](assets/player_seek.png?raw=true)
 
 
-Whisky Tango Foxtrot Why a Movie Player?
+Why a Movie Player?
 ----------------------------------------
-Glass is designed for micro-interactions so why would anyone want a movie player? Because it works really well with some movies. I have watched Android design in action videos while on a treadmill and it works great. Videos that don't require constant visual attention are great to watch on glass while on the go. I would not recommend watching any crazy movies such as Memento where you just can't keep your eyes off the screen. Feel free to experiment what type of videos work in what situations. At the moment, volume is a bit of an issue if you're in a loud place, but as a temporary fix, I just wear an ear-plug in my right ear to let the bone conduction do its thing.
+Glass is designed for micro-interactions so why would anyone want a movie player? Because it works really well in certain situations. I have watched Android design in action videos while on a treadmill and it works great. Videos that don't require constant visual attention are great to watch on glass while on the go. I would not recommend watching any crazy movies such as Memento where you just can't keep your eyes off the screen. Feel free to experiment what type of videos work in what situations. At the moment, volume is a bit of an issue if you're in a loud place, but as a temporary fix, I just wear an ear-plug in my right ear to let the bone conduction do its thing.
