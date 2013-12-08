@@ -1,33 +1,36 @@
 package com.ocd.dev.glassmovieplayer;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 
-import com.google.glass.app.GlassApplication;
-import com.google.glass.input.InputListener;
-import com.google.glass.input.SwipeDirection;
-import com.google.glass.input.TouchDetector;
-import com.google.glass.sound.SoundManager;
-import com.google.glass.sound.SoundManager.SoundId;
+import com.google.android.glass.touchpad.GestureDetector;
+import com.google.android.glass.widget.CardScrollView;
+import com.ocd.dev.glassmovieplayer.SoundManager.SoundId;
 
-public class MovieBucketBrowserActivity extends Activity implements InputListener, LoaderCallbacks<Cursor> {
+public class MovieBucketBrowserActivity extends Activity implements LoaderCallbacks<Cursor> {
 	public static final int RESULT_VIDEO = 1;
 	private static final int URL_LOADER = 0;
-	private HorizontalList mList;
-	private TouchDetector mTouchDetector;
+	private CardScrollView mCardScrollView;
+	private GestureDetector mTouchDetector;
 	private MovieBucketAdapter mAdapter;
 	private View mEmptyMessage;
 	private int mLength;
@@ -41,83 +44,64 @@ public class MovieBucketBrowserActivity extends Activity implements InputListene
 		
 		setContentView(R.layout.activity_movie_picker);
 		mLength = -1;
-		mList = (HorizontalList)findViewById(R.id.list);
+		mCardScrollView = (CardScrollView)findViewById(R.id.list);
 		mEmptyMessage = findViewById(R.id.empty);
 		
-		mTouchDetector = new TouchDetector(this, this);
+		mCardScrollView.setOnItemClickListener(mItemClickListener);
 		
         getLoaderManager().initLoader(URL_LOADER, null, this);
         
-        mList.activate();
+        mCardScrollView.activate();
         
         mMovieBuckets = new ArrayList<MovieBucket>();
         mAdapter = new MovieBucketAdapter(this, mMovieBuckets);
-        mList.setAdapter(mAdapter);
+        mCardScrollView.setAdapter(mAdapter);
 	}
 	
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
-		mTouchDetector.onTouchEvent(event);
-		return true;
-	}
-
-	@Override
-	public boolean onCameraButtonPressed() {
-		return false;
-	}
-
-	@Override
-	public boolean onConfirm() {
-		int position = mList.getSelectedItemPosition();
-		
-		if(mLength > 0 && position != -1) {
-			getSoundManager().playSound(SoundId.TAP);
-			Intent intent = new Intent(this, MoviePickerActivity.class);
-			intent.putExtra(MoviePickerActivity.EXTRA_MOVIE_BUCKET, mMovieBuckets.get(position).getId());
-			startActivity(intent);
-			return true;
-		}
-		
 		return false;
 	}
 	
-	private GlassApplication getGlassApplication()
-    {
-      return GlassApplication.from(this);
-    }
-    
+	private OnItemClickListener mItemClickListener = new OnItemClickListener() {
+
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position,
+				long id) {
+			if(mLength > 0 && position != -1) {
+				getSoundManager().playSound(SoundId.TAP);
+				Intent intent = new Intent(MovieBucketBrowserActivity.this, MoviePickerActivity.class);
+				intent.putExtra(MoviePickerActivity.EXTRA_MOVIE_BUCKET, mMovieBuckets.get(position).getId());
+				startActivity(intent);
+			}
+		}
+	};
+	
+	/*
+	private BaseListener mBaseListener = new BaseListener() {
+		
+		@Override
+		public boolean onGesture(Gesture gesture) {
+			if(gesture == Gesture.TAP) {
+				int position = mCardScrollView.getSelectedItemPosition();
+				
+				if(mLength > 0 && position != -1) {
+					getSoundManager().playSound(SoundId.TAP);
+					Intent intent = new Intent(MovieBucketBrowserActivity.this, MoviePickerActivity.class);
+					intent.putExtra(MoviePickerActivity.EXTRA_MOVIE_BUCKET, mMovieBuckets.get(position).getId());
+					startActivity(intent);
+					return true;
+				}
+			}
+			return false;
+		}
+	};
+	*/
+
     private SoundManager getSoundManager()
     {
-      return getGlassApplication().getSoundManager();
+      return ((GlassApplication)getApplication()).getSoundManager();
     }
-
-	@Override
-	public boolean onDismiss(DismissAction arg0) {
-		return false;
-	}
-
-	@Override
-	public boolean onFingerCountChanged(int arg0, boolean arg1) {
-		return mList.onFingerCountChanged(arg0, arg1);
-	}
-
-	@Override
-	public boolean onPrepareSwipe(int arg0, float arg1, float arg2, float arg3,
-			float arg4, int arg5, int arg6) {
-		mList.onPrepareSwipe(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
-		return true;
-	}
-
-	@Override
-	public boolean onSwipe(int arg0, SwipeDirection arg1) {
-		mList.onSwipe(arg0, arg1);
-		return true;
-	}
-
-	@Override
-	public boolean onVerticalHeadScroll(float arg0) {
-		return false;
-	}
 
 	@Override
 	public Loader<Cursor> onCreateLoader(int loaderId, Bundle bundle) {
@@ -182,5 +166,5 @@ public class MovieBucketBrowserActivity extends Activity implements InputListene
 		mMovieBuckets.clear();
 		mAdapter.notifyDataSetChanged();
 	}
-
+	
 }

@@ -30,12 +30,12 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.glass.app.GlassApplication;
-import com.google.glass.input.InputListener;
-import com.google.glass.input.SwipeDirection;
-import com.google.glass.input.TouchDetector;
-import com.google.glass.sound.SoundManager;
-import com.google.glass.sound.SoundManager.SoundId;
+import com.google.android.glass.touchpad.Gesture;
+import com.google.android.glass.touchpad.GestureDetector;
+import com.google.android.glass.touchpad.GestureDetector.BaseListener;
+import com.google.android.glass.touchpad.GestureDetector.FingerListener;
+import com.google.android.glass.touchpad.GestureDetector.ScrollListener;
+import com.ocd.dev.glassmovieplayer.SoundManager.SoundId;
 
 public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callback, MediaPlayer.OnPreparedListener {
 	public static final String TAG = "VID";
@@ -52,9 +52,10 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     private FrameLayout mContainer;
     private ProgressBar mLoadProgressBar;
     private MovieSeekBar mMovieSeekBar;
-	private TouchDetector mTouchDetector;
+    private GestureDetector mTouchDetector;
 	private ArrayList<CharSequence> mVideoList;
 	private int mVideoIndex = 0;
+	private boolean paused;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +72,7 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
         
 		initMovieSeekBar();
 		
-		mTouchDetector = new TouchDetector(this, mInputListener);
+		initGestureDetector();
 	}
 
 	private void initProgressBar() {
@@ -107,7 +108,7 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 		if(mVideoList == null) {
 	    	mMovieUri = intent.getData();
 		} else if (mVideoList.size() > 0) {
-			mMovieUri = Uri.parse((String)mVideoList.get(mVideoIndex++));
+			mMovieUri = Uri.parse((String)mVideoList.get(mVideoIndex));
 		}
         
         try {
@@ -116,6 +117,7 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
             mPlayer.setDataSource(this, mMovieUri);
             mPlayer.setOnPreparedListener(this);
             mPlayer.setOnErrorListener(mErrorListener);
+            Log.e(TAG, "initialized movie player");
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
             errorLoadingMediaPlayer();
@@ -147,11 +149,20 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
         mMovieSeekBar.setProgress(getCurrentPosition());
         updateSeekBarProgressWhileShowing();
 	}
+	
+	private void initGestureDetector() {
+		mTouchDetector = new GestureDetector(this);
+		mTouchDetector.setBaseListener(mBaseListener);
+		mTouchDetector.setFingerListener(mFingerListener);
+		mTouchDetector.setScrollListener(mScrollListener);
+	}
     
     @Override
     protected void onResume() {
     	super.onResume();
     	mWakeLock.acquire();
+    	
+    	Log.e(TAG, "on resume. Prepared: " + mPrepared);
     	
     	if(mPrepared) {
     		mPlayer.setOnCompletionListener(mCompletion);
@@ -172,6 +183,8 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     	mPlayer.setOnCompletionListener(null);
     	mPlayer.stop();
     	mPlayer.release();
+    	
+    	Log.e(TAG, "on pause called. player stopped and released");
     	
     	// don't want callback to trigger after pause
     	mHandler.removeCallbacks(mSeekRunnable);
@@ -199,6 +212,7 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch(item.getItemId()) {
     	case R.id.resume:
+    		paused = false;
     		resumeMovie();
     		return true;
     	default:
@@ -209,7 +223,7 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
-    	mTouchDetector.onTouchEvent(event);
+    	mTouchDetector.onMotionEvent(event);
     	return true;
     }
     
@@ -230,16 +244,6 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 			updateSeekBarProgressWhileShowing();
 			start();
     	}
-    }
-    
-    private GlassApplication getGlassApplication()
-    {
-      return GlassApplication.from(this);
-    }
-    
-    private SoundManager getSoundManager()
-    {
-      return getGlassApplication().getSoundManager();
     }
     
     private Runnable mSeekRunnable = new Runnable() {
@@ -271,15 +275,42 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     public void surfaceCreated(SurfaceHolder holder) {
     	mPlayer.setDisplay(holder);
         mPlayer.prepareAsync();
+        Log.e(TAG, "called prepareAsync in surfaceCreated");
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        
     }
 
     @Override
     public void onPrepared(MediaPlayer mp) {
+		Log.e(TAG, "video at index " + mVideoIndex + " prepared. starting");
+		
+		// some videos are occasionally not loaded properly. this code tries to reload
+		if(mPlayer.getDuration() <= 0) {
+			Log.e(TAG, "something went wrong while preparing. retrying");
+			try {
+				mPlayer.reset();
+				mPlayer.setDataSource(MoviePlayerActivity.this, mMovieUri);
+				mPlayer.prepare();
+			} catch (IllegalStateException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		if(mPlayer.getDuration() <= 0) {
+			Log.e(TAG, "could not fix. moving on to next video.");
+			Toast.makeText(MoviePlayerActivity.this, "Couldn't load video " +
+				(mVideoIndex + 1) + ". Skipping." , Toast.LENGTH_SHORT).show();
+			++mVideoIndex;
+			playNextMovieIfNeeded();
+			return;
+		}
+		
+		++mVideoIndex;
+
         mPlayer.start();
         
         mPlayer.setOnCompletionListener(mCompletion);
@@ -308,34 +339,41 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 
     	@Override
     	public void onCompletion(MediaPlayer mp) {
-    		if(mVideoList == null || mVideoIndex >= mVideoList.size()) {
-	    		getSoundManager().playSound(SoundId.VIDEO_STOP);
-	    		mMovieSeekBar.hideNow();
-	    		finish();
-    		} else {
-	    		getSoundManager().playSound(SoundId.VIDEO_START);
-				playNextMovie();
-    		}
+    		Log.e(TAG, "video completed");
+    		playNextMovieIfNeeded();
     	}
-
-		private void playNextMovie() {
-			try {
-				mMovieUri = Uri.parse((String)mVideoList.get(mVideoIndex++));
-				mPlayer.reset();
-				mPlayer.setDataSource(MoviePlayerActivity.this, mMovieUri);
-				mPlayer.prepare();
-				start();
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			} catch (IllegalStateException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
     };
+    
+    private void playNextMovieIfNeeded() {
+    	if(mVideoList == null || mVideoIndex >= mVideoList.size()) {
+			Log.e(TAG, "all videos completed");
+    		getSoundManager().playSound(SoundId.VIDEO_STOP);
+    		mMovieSeekBar.hideNow();
+    		finish();
+		} else {
+    		getSoundManager().playSound(SoundId.VIDEO_START);
+			playNextMovie();
+		}
+    }
+    
+    private void playNextMovie() {
+		try {
+			Log.e(TAG, "preparing video at index " + mVideoIndex);
+			mMovieUri = Uri.parse((String)mVideoList.get(mVideoIndex));
+			Log.e(TAG, "URI: " + mMovieUri);
+			mPlayer.reset();
+			mPlayer.setDataSource(MoviePlayerActivity.this, mMovieUri);
+			mPlayer.prepareAsync();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IllegalStateException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
     public int getCurrentPosition() {
         return mPlayer.getCurrentPosition();
@@ -380,23 +418,46 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 		finish();
 	}
 	
-	private InputListener mInputListener = new InputListener() {
-		private float x;
+	private BaseListener mBaseListener = new BaseListener() {
 		
 		@Override
-		public boolean onVerticalHeadScroll(float arg0) {
+		public boolean onGesture(Gesture gesture) {
+			if(gesture == Gesture.TAP) {
+				paused = true;
+				openOptionsMenu();
+				pauseMovie();
+				return true;
+			} 
+
 			return false;
 		}
-		
-		@Override
-		public boolean onSwipe(int arg0, SwipeDirection arg1) {
-			return false;
+	};
+	
+	public void onOptionsMenuClosed(Menu menu) {
+		if(paused) {
+			finish();
 		}
+	}
+	
+	private FingerListener mFingerListener = new FingerListener() {
 		
 		@Override
-		public boolean onPrepareSwipe(int arg0, float arg1, float arg2, float arg3,
-				float arg4, int arg5, int arg6) {
-			float dx = arg1 - x;
+		public void onFingerCountChanged(int previousCount, int currentCount) {
+			if(currentCount == 1) {
+				mMovieSeekBar.show();
+			} else if(currentCount == 0) {
+				mMovieSeekBar.hide();
+				//x = 0f;
+				updateSeekBarProgressWhileShowing();
+			}
+		}
+	};
+	
+	private ScrollListener mScrollListener = new ScrollListener() {
+		
+		@Override
+		public boolean onScroll(float displacement, float delta, float velocity) {
+			float dx = delta;
 			
             int duration = getDuration();
             float rate = Math.min(duration / 2000f, 400f);
@@ -406,40 +467,13 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
             if(pos > duration) pos = duration;
             seekTo(pos);
             mMovieSeekBar.setProgress(pos);
-			
-			x = arg1;
-			
+
 			return true;
-		}
-		
-		@Override
-		public boolean onFingerCountChanged(int count, boolean arg1) {
-			if(count == 1) {
-				mMovieSeekBar.show();
-			} else if(count == 0) {
-				mMovieSeekBar.hide();
-				x = 0f;
-				updateSeekBarProgressWhileShowing();
-			}
-			return false;
-		}
-		
-		@Override
-		public boolean onDismiss(DismissAction arg0) {
-			return false;
-		}
-		
-		@Override
-		public boolean onConfirm() {
-			openOptionsMenu();
-			pauseMovie();
-			return true;
-		}
-		
-		@Override
-		public boolean onCameraButtonPressed() {
-			return false;
 		}
 	};
+	
+	private SoundManager getSoundManager() {
+		return ((GlassApplication)getApplication()).getSoundManager();
+	}
 
 }

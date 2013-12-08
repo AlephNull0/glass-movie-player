@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.glass.widget.horizontalscroll.RelativeLayoutCard xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="640px"
     android:layout_height="360px" >
     
@@ -9,16 +9,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
     
-    <com.google.glass.widget.TypophileTextView
+    <TextView
         android:id="@+id/name"
         android:textAppearance="@style/MediumOverlayText"
         android:padding="16dip"
-        fontWeight="condensed"
         android:layout_centerInParent="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
     
-    <com.google.glass.widget.TipsView
+    <TextView
         android:id="@+id/count"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
@@ -28,4 +27,4 @@
         android:layout_marginRight="40px"
         style="@style/TipsViewText" />
     
-</com.google.glass.widget.horizontalscroll.RelativeLayoutCard>
+</RelativeLayout>

@@ -5,58 +5,30 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.ThumbnailUtils;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
-import com.google.glass.widget.TipsView;
-import com.google.glass.widget.horizontalscroll.ViewRecycler;
+import com.google.android.glass.app.Card;
+import com.google.android.glass.widget.CardScrollAdapter;
 
-public class MovieAdapter extends SimpleCursorAdapter implements ViewRecycler {
+public class MovieAdapter extends CardScrollAdapter {
 	private Context mContext;
 	private LayoutInflater mInflater;
 	private int mVideoColumnIndex, mIdColumnIndex;
+	private Cursor mCursor;
 	
-	public MovieAdapter(Context context, int layout, Cursor c, String[] from,
-			int[] to, int flags) {
-		super(context, layout, c, from, to, flags);
+	public MovieAdapter(Context context, Cursor c) {
 		mInflater = LayoutInflater.from(context);
 		mContext = context;
-	}
-	
-	@Override
-	public View newView(Context context, Cursor cursor, ViewGroup parent) {
-		View view = mInflater.inflate(R.layout.movie_row, parent, false);
-		view.setTag(com.google.glass.common.R.id.tag_horizontal_scroll_item_view_recycler, this);
-		return view;
-	}
-	
-	@Override
-	public void bindView(View view, Context context, Cursor cursor) {
-		mVideoColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
-		mIdColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
-		
-		TextView name = (TextView)view.findViewById(R.id.name);
-		ImageView thumbnail = (ImageView)view.findViewById(R.id.thumbnail);
-		TipsView count = (TipsView)view.findViewById(R.id.count);
-		count.setText(String.format("%d of %d", cursor.getPosition() + 1, cursor.getCount()));
-		name.setText(cursor.getString(mVideoColumnIndex));
-		
-		long id = cursor.getLong(mIdColumnIndex);
-		
-		new ImageLoader().execute(thumbnail, Long.valueOf(id));
+		mCursor = c;
 	}
 
-	@Override
-	public void recycleView(View arg0) {
-		
-	}
-	
 	private class ImageLoader extends AsyncTask<Object, String, Bitmap> {
 
 	    private ImageView view;
@@ -67,7 +39,7 @@ public class MovieAdapter extends SimpleCursorAdapter implements ViewRecycler {
 	        // Get the passed arguments here
 	        view = (ImageView) parameters[0];
 	        long id = (long)(Long)parameters[1];
-
+	        
 	        // Create bitmap from passed in Uri here
 	        BitmapFactory.Options options = new BitmapFactory.Options();
 			options.inSampleSize = 1;
@@ -83,6 +55,55 @@ public class MovieAdapter extends SimpleCursorAdapter implements ViewRecycler {
 				view.setImageBitmap(bitmap);
 	        }
 	    }
+	}
+
+	@Override
+	public int findIdPosition(Object id) {
+		return ((Cursor)id).getPosition();
+	}
+
+	@Override
+	public int findItemPosition(Object item) {
+		return 0;
+	}
+
+	@Override
+	public int getCount() {
+		return mCursor.getCount();
+	}
+
+	@Override
+	public Object getItem(int position) {
+		mCursor.moveToPosition(position);
+		return mCursor;
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		View view;
+		
+		if(convertView == null) {
+			view = mInflater.inflate(R.layout.movie_row, parent, false);
+		} else {
+			view = convertView;
+		}
+		
+		mVideoColumnIndex = mCursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
+		mIdColumnIndex = mCursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
+		
+		mCursor.moveToPosition(position);
+		
+		TextView name = (TextView)view.findViewById(R.id.name);
+		ImageView thumbnail = (ImageView)view.findViewById(R.id.thumbnail);
+		TextView count = (TextView)view.findViewById(R.id.count);
+		count.setText(String.format("%d of %d", mCursor.getPosition() + 1, mCursor.getCount()));
+		name.setText(mCursor.getString(mVideoColumnIndex));
+		
+		long id = mCursor.getLong(mIdColumnIndex);
+		
+		new ImageLoader().execute(thumbnail, Long.valueOf(id));
+		
+		return view;
 	}
 
 }

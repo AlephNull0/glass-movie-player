@@ -11,14 +11,12 @@ import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.glass.widget.TipsView;
-import com.google.glass.widget.horizontalscroll.ViewRecycler;
+import com.google.android.glass.widget.CardScrollAdapter;
 
-public class MovieBucketAdapter extends BaseAdapter implements ViewRecycler {
+public class MovieBucketAdapter extends CardScrollAdapter {
 	private Context mContext;
 	private LayoutInflater mInflater;
 	private List<MovieBucket> mMovieBuckets;
@@ -27,11 +25,6 @@ public class MovieBucketAdapter extends BaseAdapter implements ViewRecycler {
 		mContext = context;
 		mInflater = LayoutInflater.from(mContext);
 		mMovieBuckets = movieBuckets;
-	}
-	
-	@Override
-	public void recycleView(View arg0) {
-		
 	}
 	
 	@Override
@@ -45,18 +38,12 @@ public class MovieBucketAdapter extends BaseAdapter implements ViewRecycler {
 	}
 
 	@Override
-	public long getItemId(int position) {
-		return position;
-	}
-
-	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		View view;
 		ViewHolder holder;
 		
 		if(convertView == null) {
 			view = mInflater.inflate(R.layout.movie_bucket_row, parent, false);
-			view.setTag(com.google.glass.common.R.id.tag_horizontal_scroll_item_view_recycler, this);
 			holder = new ViewHolder();
 			
 			holder.name = (TextView)view.findViewById(R.id.name);
@@ -65,7 +52,7 @@ public class MovieBucketAdapter extends BaseAdapter implements ViewRecycler {
 			ImageView thumbnail3 = (ImageView)view.findViewById(R.id.thumbnail3);
 			ImageView thumbnail4 = (ImageView)view.findViewById(R.id.thumbnail4);
 			holder.thumbnails = new ImageView[] { thumbnail1, thumbnail2, thumbnail3, thumbnail4 };
-			holder.count = (TipsView)view.findViewById(R.id.count);
+			holder.count = (TextView)view.findViewById(R.id.count);
 			view.setTag(holder);
 		} else {
 			view = convertView;
@@ -88,7 +75,7 @@ public class MovieBucketAdapter extends BaseAdapter implements ViewRecycler {
 	private static class ViewHolder {
 		public ImageView[] thumbnails;
 		public TextView name;
-		public TipsView count;
+		public TextView count;
 	}
 	
 	private class BucketCoverLoader extends AsyncTask<Object, String, Bitmap> {
@@ -116,6 +103,16 @@ public class MovieBucketAdapter extends BaseAdapter implements ViewRecycler {
 				view1.setImageBitmap(bitmap);
 	        }
 	    }
+	}
+
+	@Override
+	public int findIdPosition(Object id) {
+		return -1;
+	}
+
+	@Override
+	public int findItemPosition(Object item) {
+		return mMovieBuckets.indexOf(item);
 	}
 
 }
