@@ -4,7 +4,11 @@
     <item
         android:id="@+id/resume"
         android:title="Resume"
-        android:icon="@drawable/ic_media_play"
-        android:showAsAction="never" />
+        android:icon="@drawable/ic_media_play" />
+    
+    <item
+        android:id="@+id/adjust_volume"
+        android:title="Volume"
+        android:icon="@drawable/ic_volume_medium" />
 
 </menu>

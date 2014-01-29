@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
@@ -30,6 +33,7 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.android.glass.media.Sounds;
 import com.google.android.glass.touchpad.Gesture;
 import com.google.android.glass.touchpad.GestureDetector;
 import com.google.android.glass.touchpad.GestureDetector.BaseListener;
@@ -56,6 +60,7 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 	private ArrayList<CharSequence> mVideoList;
 	private int mVideoIndex = 0;
 	private boolean paused;
+	private AudioManager mAudioManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +78,8 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
 		initMovieSeekBar();
 		
 		initGestureDetector();
+		
+		mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
 	}
 
 	private void initProgressBar() {
@@ -173,7 +180,12 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     protected void onPause() {
     	super.onPause();
     	mWakeLock.release();
-    	
+    }
+    
+    @Override
+	protected void onStop() {
+    	Log.e("ASS", "on stop called");
+    	super.onStop();
     	// commit current position and url for restore
     	SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
     	editor.putString(PREFS_PREVIOUS_URL, mMovieUri.toString());
@@ -183,8 +195,6 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     	mPlayer.setOnCompletionListener(null);
     	mPlayer.stop();
     	mPlayer.release();
-    	
-    	Log.e(TAG, "on pause called. player stopped and released");
     	
     	// don't want callback to trigger after pause
     	mHandler.removeCallbacks(mSeekRunnable);
@@ -214,6 +224,20 @@ public class MoviePlayerActivity extends Activity implements SurfaceHolder.Callb
     	case R.id.resume:
     		paused = false;
     		resumeMovie();
+    		return true;
+    	case R.id.adjust_volume:
+    		paused = false;
+    		Dialog dialog = new VolumeDialog(this);
+    		dialog.setOnDismissListener(new OnDismissListener() {
+				
+				@Override
+				public void onDismiss(DialogInterface dialog) {
+					mAudioManager.playSoundEffect(Sounds.DISMISSED);
+					resumeMovie();
+				}
+			});
+    		Log.e("ASS", "volume adjusting");
+    		dialog.show();
     		return true;
     	default:
 	    	return super.onOptionsItemSelected(item);

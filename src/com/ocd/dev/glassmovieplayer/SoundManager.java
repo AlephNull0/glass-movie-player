@@ -6,9 +6,9 @@ import android.media.SoundPool;
 
 public class SoundManager {
 	private SoundPool mSoundPool;
-	private int mDismiss, mTap, mVideoStart, mVideoStop;
+	private int mDismiss, mTap, mVideoStart, mVideoStop, mVolumeChange;
 	
-	public enum SoundId { TAP, DISMISS, VIDEO_START, VIDEO_STOP }
+	public enum SoundId { TAP, DISMISS, VIDEO_START, VIDEO_STOP, VOLUME_CHANGE }
 	
 	public SoundManager(Context context) {
 		mSoundPool = new SoundPool(1, AudioManager.STREAM_SYSTEM, 0);
@@ -16,6 +16,7 @@ public class SoundManager {
 		mTap = mSoundPool.load(context, R.raw.sound_tap, 1);
 		mVideoStart = mSoundPool.load(context, R.raw.sound_video_start, 1);
 		mVideoStop = mSoundPool.load(context, R.raw.sound_video_stop, 1);
+		mVolumeChange = mSoundPool.load(context, R.raw.sound_volume_change, 1);
 	}
 	
 	public void playSound(SoundId soundId) {
@@ -33,6 +34,8 @@ public class SoundManager {
 		case VIDEO_STOP:
 			id = mVideoStop;
 			break;
+		case VOLUME_CHANGE:
+			id = mVolumeChange;
 		}
 		
 		if(id != -1) {
