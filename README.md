@@ -2,6 +2,8 @@ Glass Movie Player
 ==========================
 Browse and watch movies on Google Glass.
 
+Note: With the XE16/17 updates, fetching video thumbnails from the content provider is noticeably slow. If anyone knows how to fix this, please let me know!
+
 Usage
 -----
 1.  Install the apk using adb:  
@@ -26,6 +28,8 @@ adb push my_video.mp4 /sdcard/Movies/
 ```
 
 You can upload videos anywhere in the /sdcard directory, but I like using the default Movies subdirectory.
+
+Note: If you uploaded videos to Glass with adb and GlassMoviePlayer can't find them, restart Glass.
 
 
 Watching Videos

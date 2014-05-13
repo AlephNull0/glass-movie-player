@@ -58,16 +58,6 @@ public class MovieAdapter extends CardScrollAdapter {
 	}
 
 	@Override
-	public int findIdPosition(Object id) {
-		return ((Cursor)id).getPosition();
-	}
-
-	@Override
-	public int findItemPosition(Object item) {
-		return 0;
-	}
-
-	@Override
 	public int getCount() {
 		return mCursor.getCount();
 	}
@@ -76,6 +66,11 @@ public class MovieAdapter extends CardScrollAdapter {
 	public Object getItem(int position) {
 		mCursor.moveToPosition(position);
 		return mCursor;
+	}
+
+	@Override
+	public int getPosition(Object item) {
+		return ((Cursor)item).getPosition();
 	}
 
 	@Override

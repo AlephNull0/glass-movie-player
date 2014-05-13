@@ -21,6 +21,7 @@ public class MovieBucketAdapter extends CardScrollAdapter {
 	private LayoutInflater mInflater;
 	private List<MovieBucket> mMovieBuckets;
 	
+	
 	public MovieBucketAdapter(Context context, List<MovieBucket> movieBuckets) {
 		mContext = context;
 		mInflater = LayoutInflater.from(mContext);
@@ -45,6 +46,7 @@ public class MovieBucketAdapter extends CardScrollAdapter {
 		if(convertView == null) {
 			view = mInflater.inflate(R.layout.movie_bucket_row, parent, false);
 			holder = new ViewHolder();
+			
 			
 			holder.name = (TextView)view.findViewById(R.id.name);
 			ImageView thumbnail1 = (ImageView)view.findViewById(R.id.thumbnail1);
@@ -106,12 +108,7 @@ public class MovieBucketAdapter extends CardScrollAdapter {
 	}
 
 	@Override
-	public int findIdPosition(Object id) {
-		return -1;
-	}
-
-	@Override
-	public int findItemPosition(Object item) {
+	public int getPosition(Object item) {
 		return mMovieBuckets.indexOf(item);
 	}
 
